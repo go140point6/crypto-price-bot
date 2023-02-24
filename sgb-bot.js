@@ -1,7 +1,7 @@
 require('dotenv').config() // Load .env file
 require('log-timestamp')
-const ethers = require('ethers')
 const { Client, Intents } = require('discord.js')
+const axios = require('axios')
 
 const myIntents = new Intents();
 myIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS)
@@ -23,47 +23,6 @@ var member
 
 var sgbPrice
 
-var provider = new ethers.providers.JsonRpcProvider(
-  "https://sgb.ftso.com.au/ext/bc/C/rpc"
-)
-
-const ftsoRegistry = {
-  address: "0x6D222fb4544ba230d4b90BA1BfC0A01A94E6cB23",
-  abi: [
-    {
-      type: "function",
-      stateMutability: "view",
-      outputs: [
-        { type: "uint256", name: "_price", internalType: "uint256" },
-        { type: "uint256", name: "_timestamp", internalType: "uint256" },
-      ],
-      name: "getCurrentPrice",
-      inputs: [{ type: "string", name: "_symbol", internalType: "string" }],
-    },
-    {
-      type: "function",
-      stateMutability: "view",
-      outputs: [
-        { type: "uint256", name: "_price", internalType: "uint256" },
-        { type: "uint256", name: "_timestamp", internalType: "uint256" },
-      ],
-      name: "getCurrentPrice",
-      inputs: [
-        { type: "uint256", name: "_assetIndex", internalType: "uint256" },
-      ],
-    },
-  ],
-}
-
-// Create FTSO Registry contract instance
-const ftsoRegistryContract = new ethers.Contract(
-  ftsoRegistry.address,
-  ftsoRegistry.abi,
-  provider
-)
-
-//console.log(ftsoRegistryContract)
-  
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -118,71 +77,25 @@ async function setGreen() {
 }
 
 async function getInitialPrice() {
+  await axios.get(`https://api.coingecko.com/api/v3/coins/songbird`).then(res => {
+    if(res.data) {
+      var name = res.data.name;
+      if (res.data.market_data.current_price.usd !== undefined) {
+      var price = (res.data.market_data.current_price.usd).toString();
+      console.log(price);
+      } 
+    }
+  }).catch(err => {
+  console.log(`Some error with api call, please try again or ping my overseer.`);
+  });
+};
+
+
+/*
   let sgbBN = await ftsoRegistryContract["getCurrentPrice(string)"]("SGB")
   let sgb = Number(sgbBN._price) / 10 ** 5;
   console.log(sgb);
   sgbPrice = sgb;
-
-  let ftso = {
-    // OracleSwap
-    //address: "0x73E93D9657E6f32203f900fe1BD81179a5bf6Ce4",
-    // Pangolin
-    address: "0x6591cf4E1CfDDEcB4Aa5946c033596635Ba6FB0F",
-    abi: [
-      {
-              "inputs": [
-                      {
-                              "internalType": "uint256",
-                              "name": "amountIn",
-                              "type": "uint256"
-                      },
-                      {
-                              "internalType": "address[]",
-                              "name": "path",
-                              "type": "address[]"
-                      }
-              ],
-              "name": "getAmountsOut",
-              "outputs": [
-                      {
-                              "internalType": "uint256[]",
-                              "name": "amounts",
-                              "type": "uint256[]"
-                      }
-              ],
-              "stateMutability": "view",
-              "type": "function"
-      }
-    ],
-  };
-
-  const ftsoContract = new ethers.Contract(ftso.address, ftso.abi, provider)
-
-  //console.log(ftsoContract)
-
-  const WSB_ADDRESS = "0x02f0826ef6ad107cfc861152b32b52fd11bab9ed"
-  const wsb = "wsb"
-  const SPRK_ADDRESS = "0xfd2a0fD402828fDB86F9a9D5a760242AD7526cC0"
-  const sprk = "sprk"
-
-  //let sgbBN = await ftsoRegistryContract["getCurrentPrice(string)"]("SGB")
-  //let sgb = Number(sgbBN._price) / 10 ** 5;
-  console.log(sgbPrice);
-
-  let arryPrice = await ftsoContract.getAmountsOut(
-      ethers.utils.parseEther("1"),
-      [WSB_ADDRESS, SPRK_ADDRESS]
-  )
-
-  //console.log(arryPrice[0])
-  //console.log(arryPrice[1])
-
-  let wsbSGBPrice = Number(arryPrice[0]._hex) / 10 ** 18
-  let sprkSGBPrice = (Number(arryPrice[1]._hex) / 10 ** 18).toFixed(5)
-  let wsbUSDPrice = (sgbPrice / wsbSGBPrice).toFixed(5)
-  let sprkUSDPrice = (sgbPrice / sprkSGBPrice).toFixed(5)
-  console.log(wsb + " USD price is " + wsbUSDPrice)
-  console.log(sprk + " USD price is " + sprkUSDPrice)
 
   clearRoles()
   lastPrice = sprkUSDPrice || 0
@@ -200,7 +113,9 @@ async function getInitialPrice() {
   console.log('Initial price to', lastPrice)
   //console.log(`SGB: ${sgbPrice} per ${symbol}`)
 }
- 
+*/
+
+/*
 async function getPrices() {
   let sgbBN = await ftsoRegistryContract["getCurrentPrice(string)"]("SGB")
   let sgb = Number(sgbBN._price) / 10 ** 5;
@@ -299,6 +214,7 @@ async function getPrices() {
 
   lastPrice = currentPrice
 }
+*/
 
 // Runs when client connects to Discord.
 client.on('ready', () => {
